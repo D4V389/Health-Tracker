@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Health Tracker">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Health Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: #e0e0e0;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 70px);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(env(safe-area-inset-bottom, 10px) + 10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 15px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .tab-btn.active {
+            color: #60a5fa;
+        }
+        
+        .tab-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card.mood .value { color: #60a5fa; }
+        .stat-card.diet .value { color: #34d399; }
+        .stat-card.pain .value { color: #f87171; }
+        .stat-card.bowel .value { color: #fbbf24; }
+        .stat-card.exercise .value { color: #a78bfa; }
+        .stat-card.water .value { color: #22d3ee; }
+        .stat-card.sleep .value { color: #818cf8; }
+        .stat-card.stress .value { color: #fb923c; }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .input-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 15px;
+        }
+        
+        .date-picker {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 14px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            -webkit-appearance: none;
+        }
+        
+        .slider-group {
+            margin-bottom: 20px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .slider-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .slider-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: right;
+        }
+        
+        .slider-track {
+            position: relative;
+            height: 44px;
+            display: flex;
+            align-items: center;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #60a5fa;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(96, 165, 250, 0.4);
+        }
+        
+        .toggle-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .toggle-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 56px;
+            height: 32px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle.active {
+            background: #34d399;
+        }
+        
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 26px;
+            height: 26px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+        
+        .btn {
+            width: 100%;
+            background: #60a5fa;
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            margin-top: 10px;
+        }
+        
+        .heatmap-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        .heatmap {
+            min-width: 600px;
+        }
+        
+        .heatmap-row {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-bottom: 2px;
+        }
+        
+        .heatmap-label {
+            width: 60px;
+            font-size: 0.7rem;
+            color: #888;
+            text-align: right;
+            padding-right: 8px;
+            flex-shrink: 0;
+        }
+        
+        .heatmap-cell {
+            width: 10px;
+            height: 16px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .chart-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 15px;
+        }
+        
+        .chart-card h4 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .chart-container {
+            height: 150px;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: #888;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+        
+        .history-list {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-date {
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        
+        .history-preview {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .history-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .settings-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .settings-label {
+            font-size: 0.95rem;
+            color: #fff;
+        }
+        
+        .settings-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #60a5fa;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #34d399;
+            color: #000;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 200;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Log Tab -->
+    <div id="logTab" class="tab-content active">
+        <div class="header">
+            <h1>Log Entry</h1>
+            <p id="todayDate"></p>
+        </div>
+        
+        <div class="input-card">
+            <input type="date" id="entryDate" class="date-picker">
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">😊 Mood</span>
+                    <span class="slider-value" id="moodValue" style="color:#60a5fa">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="moodSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">🥗 Diet</span>
+                    <span class="slider-value" id="dietValue" style="color:#34d399">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="dietSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">🩹 Pain</span>
+                    <span class="slider-value" id="painValue" style="color:#f87171">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="painSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">🚽 Bowel</span>
+                    <span class="slider-value" id="bowelValue" style="color:#fbbf24">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="bowelSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">🏃 Exercise</span>
+                    <span class="slider-value" id="exerciseValue" style="color:#a78bfa">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="exerciseSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">💧 Water</span>
+                    <span class="slider-value" id="waterValue" style="color:#22d3ee">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="waterSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">😴 Sleep</span>
+                    <span class="slider-value" id="sleepValue" style="color:#818cf8">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="sleepSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">😰 Stress</span>
+                    <span class="slider-value" id="stressValue" style="color:#fb923c">5</span>
+                </div>
+                <div class="slider-track">
+                    <input type="range" id="stressSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="toggle-group">
+                <span class="toggle-label">💊 Medication taken</span>
+                <div class="toggle" id="medicationToggle"></div>
+            </div>
+        </div>
+        
+        <button class="btn" onclick="saveEntry()">Save Entry</button>
+    </div>
+    
+    <!-- Dashboard Tab -->
+    <div id="dashboardTab" class="tab-content">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <p>30-day averages</p>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid"></div>
+        
+        <h3 class="section-title">Weekly Heatmap</h3>
+        <div class="heatmap-container">
+            <div class="heatmap" id="heatmap"></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div> 1-3</div>
+                <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div> 4-5</div>
+                <div class="legend-item"><div class="legend-color" style="background:#eab308"></div> 6</div>
+                <div class="legend-item"><div class="legend-color" style="background:#84cc16"></div> 7-8</div>
+                <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div> 9-10</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Tab -->
+    <div id="chartsTab" class="tab-content">
+        <div class="header">
+            <h1>Trends</h1>
+            <p>Weekly averages</p>
+        </div>
+        
+        <div id="chartsContainer"></div>
+    </div>
+    
+    <!-- History Tab -->
+    <div id="historyTab" class="tab-content">
+        <div class="header">
+            <h1>History</h1>
+            <p id="entryCount">0 entries</p>
+        </div>
+        
+        <div class="history-list" id="historyList"></div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div id="settingsTab" class="tab-content">
+        <div class="header">
+            <h1>Settings</h1>
+            <p>Data management</p>
+        </div>
+        
+        <div class="settings-item">
+            <span class="settings-label">Export Data</span>
+            <button class="settings-btn" onclick="exportData()">Export JSON</button>
+        </div>
+        
+        <div class="settings-item">
+            <span class="settings-label">Import Data</span>
+            <button class="settings-btn" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+        
+        <div class="settings-item">
+            <span class="settings-label">Load Sample Data</span>
+            <button class="settings-btn" onclick="loadSampleData()">Load 2025</button>
+        </div>
+        
+        <div class="settings-item">
+            <span class="settings-label">Clear All Data</span>
+            <button class="settings-btn" style="color:#f87171" onclick="clearData()">Clear</button>
+        </div>
+    </div>
+    
+    <!-- Tab Bar -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="logTab">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Log
+        </button>
+        <button class="tab-btn" data-tab="dashboardTab">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            Dashboard
+        </button>
+        <button class="tab-btn" data-tab="chartsTab">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            Trends
+        </button>
+        <button class="tab-btn" data-tab="historyTab">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            History
+        </button>
+        <button class="tab-btn" data-tab="settingsTab">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Settings
+        </button>
+    </nav>
+    
+    <div class="toast" id="toast">Entry saved!</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let healthData = [];
+        const metrics = ['mood', 'diet', 'pain', 'bowel', 'exercise', 'water', 'sleep', 'stress'];
+        const metricLabels = ['Mood', 'Diet', 'Pain', 'Bowel', 'Exercise', 'Water', 'Sleep', 'Stress'];
+        const metricColors = ['#60a5fa', '#34d399', '#f87171', '#fbbf24', '#a78bfa', '#22d3ee', '#818cf8', '#fb923c'];
+        const reversedMetrics = ['pain', 'stress'];
+        let charts = {};
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabs();
+            initSliders();
+            initToggle();
+            setTodayDate();
+            loadData();
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
+        });
+        
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.tab).classList.add('active');
+                    
+                    if (btn.dataset.tab === 'chartsTab') {
+                        setTimeout(updateCharts, 100);
+                    }
+                });
+            });
+        }
+        
+        function initSliders() {
+            metrics.forEach(metric => {
+                const slider = document.getElementById(`${metric}Slider`);
+                const value = document.getElementById(`${metric}Value`);
+                if (slider && value) {
+                    slider.addEventListener('input', () => {
+                        value.textContent = slider.value;
+                    });
+                }
+            });
+        }
+        
+        function initToggle() {
+            const toggle = document.getElementById('medicationToggle');
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        }
+        
+        function setTodayDate() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('entryDate').value = dateStr;
+            document.getElementById('todayDate').textContent = today.toLocaleDateString('en-GB', { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long' 
+            });
+        }
+        
+        function loadData() {
+            const saved = localStorage.getItem('healthTrackerData');
+            if (saved) {
+                healthData = JSON.parse(saved);
+            }
+            updateAll();
+        }
+        
+        function saveData() {
+            localStorage.setItem('healthTrackerData', JSON.stringify(healthData));
+        }
+        
+        function saveEntry() {
+            const date = document.getElementById('entryDate').value;
+            if (!date) {
+                showToast('Please select a date');
+                return;
+            }
+            
+            const entry = {
+                date: date,
+                mood: parseInt(document.getElementById('moodSlider').value),
+                diet: parseInt(document.getElementById('dietSlider').value),
+                pain: parseInt(document.getElementById('painSlider').value),
+                bowel: parseInt(document.getElementById('bowelSlider').value),
+                medication: document.getElementById('medicationToggle').classList.contains('active') ? 'Y' : 'N',
+                exercise: parseInt(document.getElementById('exerciseSlider').value),
+                water: parseInt(document.getElementById('waterSlider').value),
+                sleep: parseInt(document.getElementById('sleepSlider').value),
+                stress: parseInt(document.getElementById('stressSlider').value)
+            };
+            
+            const existingIndex = healthData.findIndex(d => d.date === date);
+            if (existingIndex >= 0) {
+                healthData[existingIndex] = entry;
+            } else {
+                healthData.push(entry);
+                healthData.sort((a, b) => a.date.localeCompare(b.date));
+            }
+            
+            saveData();
+            updateAll();
+            showToast('Entry saved!');
+            
+            // Move to next day
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+            document.getElementById('entryDate').value = nextDate.toISOString().split('T')[0];
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        function updateAll() {
+            updateStats();
+            updateHeatmap();
+            updateHistory();
+            if (document.getElementById('chartsTab').classList.contains('active')) {
+                updateCharts();
+            }
+        }
+        
+        function updateStats() {
+            const last30 = healthData.slice(-30);
+            const statsGrid = document.getElementById('statsGrid');
+            
+            if (last30.length === 0) {
+                statsGrid.innerHTML = '<div class="empty-state" style="grid-column:span 2"><p>No data yet. Start logging!</p></div>';
+                return;
+            }
+            
+            statsGrid.innerHTML = '';
+            metrics.forEach((metric, i) => {
+                const values = last30.map(d => d[metric]).filter(v => typeof v === 'number');
+                const avg = values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : '-';
+                
+                statsGrid.innerHTML += `
+                    <div class="stat-card ${metric}">
+                        <div class="value">${avg}</div>
+                        <div class="label">${metricLabels[i]}</div>
+                    </div>
+                `;
+            });
+        }
+        
+        function getColor(value, reversed = false) {
+            if (reversed) value = 11 - value;
+            if (value <= 3) return '#ef4444';
+            if (value <= 5) return '#f59e0b';
+            if (value <= 6) return '#eab308';
+            if (value <= 8) return '#84cc16';
+            return '#22c55e';
+        }
+        
+        function calculateWeeklyAverages() {
+            if (healthData.length === 0) return [];
+            
+            const weeks = [];
+            const numWeeks = Math.ceil(healthData.length / 7);
+            
+            for (let w = 0; w < Math.min(numWeeks, 52); w++) {
+                const weekData = healthData.slice(w * 7, (w + 1) * 7);
+                if (weekData.length === 0) continue;
+                
+                const avg = {};
+                metrics.forEach(m => {
+                    const values = weekData.map(d => d[m]).filter(v => typeof v === 'number');
+                    avg[m] = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+                });
+                avg.week = w + 1;
+                weeks.push(avg);
+            }
+            return weeks;
+        }
+        
+        function updateHeatmap() {
+            const weeklyData = calculateWeeklyAverages();
+            const heatmap = document.getElementById('heatmap');
+            
+            if (weeklyData.length === 0) {
+                heatmap.innerHTML = '<div class="empty-state"><p>No data yet</p></div>';
+                return;
+            }
+            
+            heatmap.innerHTML = '';
+            metrics.forEach((metric, i) => {
+                const row = document.createElement('div');
+                row.className = 'heatmap-row';
+                row.innerHTML = `<div class="heatmap-label">${metricLabels[i]}</div>`;
+                
+                const isReversed = reversedMetrics.includes(metric);
+                
+                weeklyData.forEach(week => {
+                    const value = week[metric];
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+                    cell.style.background = value !== null ? getColor(value, isReversed) : '#333';
+                    row.appendChild(cell);
+                });
+                
+                heatmap.appendChild(row);
+            });
+        }
+        
+        function updateCharts() {
+            const weeklyData = calculateWeeklyAverages();
+            const container = document.getElementById('chartsContainer');
+            
+            if (weeklyData.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No data yet. Start logging to see trends!</p></div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            metrics.forEach((metric, i) => {
+                const cardId = `chart-${metric}`;
+                container.innerHTML += `
+                    <div class="chart-card">
+                        <h4>${metricLabels[i]}</h4>
+                        <div class="chart-container">
+                            <canvas id="${cardId}"></canvas>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            metrics.forEach((metric, i) => {
+                const ctx = document.getElementById(`chart-${metric}`).getContext('2d');
+                const data = weeklyData.map(w => w[metric]);
+                const labels = weeklyData.map(w => `W${w.week}`);
+                
+                if (charts[metric]) charts[metric].destroy();
+                
+                charts[metric] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            borderColor: metricColors[i],
+                            backgroundColor: metricColors[i] + '20',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 10,
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#888' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#888', maxTicksLimit: 8 }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            document.getElementById('entryCount').textContent = `${healthData.length} entries`;
+            
+            if (healthData.length === 0) {
+                historyList.innerHTML = '<div class="empty-state"><p>No entries yet</p></div>';
+                return;
+            }
+            
+            const recent = [...healthData].reverse().slice(0, 30);
+            historyList.innerHTML = recent.map(entry => {
+                const date = new Date(entry.date).toLocaleDateString('en-GB', { 
+                    weekday: 'short', 
+                    day: 'numeric', 
+                    month: 'short' 
+                });
+                
+                return `
+                    <div class="history-item">
+                        <span class="history-date">${date}</span>
+                        <div class="history-preview">
+                            <div class="history-dot" style="background:${getColor(entry.mood)}" title="Mood: ${entry.mood}"></div>
+                            <div class="history-dot" style="background:${getColor(entry.sleep)}" title="Sleep: ${entry.sleep}"></div>
+                            <div class="history-dot" style="background:${getColor(entry.stress, true)}" title="Stress: ${entry.stress}"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function exportData() {
+            if (healthData.length === 0) {
+                showToast('No data to export');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(healthData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'health_tracker_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported!');
+        }
+        
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    healthData = JSON.parse(e.target.result);
+                    saveData();
+                    updateAll();
+                    showToast('Data imported!');
+                } catch (err) {
+                    showToast('Invalid file format');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        function loadSampleData() {
+            if (healthData.length > 0 && !confirm('This will replace your current data. Continue?')) {
+                return;
+            }
+            
+            const data = [];
+            const startDate = new Date('2025-01-01');
+            
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + i);
+                
+                data.push({
+                    date: date.toISOString().split('T')[0],
+                    mood: Math.floor(Math.random() * 6) + 4,
+                    diet: Math.floor(Math.random() * 6) + 4,
+                    pain: Math.floor(Math.random() * 6) + 1,
+                    bowel: Math.floor(Math.random() * 6) + 3,
+                    medication: Math.random() > 0.5 ? 'Y' : 'N',
+                    exercise: Math.floor(Math.random() * 8) + 3,
+                    water: Math.floor(Math.random() * 7) + 4,
+                    sleep: Math.floor(Math.random() * 6) + 4,
+                    stress: Math.floor(Math.random() * 7) + 2
+                });
+            }
+            
+            healthData = data;
+            saveData();
+            updateAll();
+            showToast('Sample data loaded!');
+        }
+        
+        function clearData() {
+            if (!confirm('Delete all data? This cannot be undone.')) return;
+            healthData = [];
+            saveData();
+            updateAll();
+            showToast('Data cleared');
+        }
+    </script>
+</body>
+</html>
